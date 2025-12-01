@@ -6,7 +6,7 @@ video:
   height: 1920
   fps: 30
   max_duration: 7
-  backend: "sdxl"  # sdxl (Stable Diffusion XL) or qwen3 (Qwen3-VL text-to-video)
+  backend: "qwen3"  # sdxl (Stable Diffusion XL) or qwen3 (Qwen3-VL text-to-video)
   skip_subtitles: false  # set true to compose without subtitle overlay (debug video+audio only)
   format: "mp4"
   codec: "libx264"
