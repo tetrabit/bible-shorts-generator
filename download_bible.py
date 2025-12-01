@@ -23,10 +23,16 @@ def init_bible_data():
     print("This creates a local cache for faster verse lookups.\n")
 
     try:
+        # Normalize a sample reference before converting to verse IDs
+        normalized_refs = bible.normalize_reference("John 3:16")
+        if not normalized_refs:
+            print("✗ Failed to normalize test reference John 3:16")
+            return False
+
         # Test pythonbible by fetching a sample verse
         test_verse = bible.get_verse_text(
-            bible.convert_reference_to_verse_ids("John 3:16")[0],
-            version=bible.Version.KING_JAMES
+            bible.convert_reference_to_verse_ids(normalized_refs[0])[0],
+            version=bible.Version.KING_JAMES,
         )
 
         if test_verse:

@@ -169,9 +169,7 @@ You hit daily limit (6 videos/day default). Solutions:
 
 ### Issue: Piper TTS Fails
 
-```bash
-pip install --upgrade piper-tts
-```
+- Install the Piper binary from https://github.com/rhasspy/piper (recommended for Python 3.13), or run under Python ≤3.12 and `pip install piper-tts`, then rerun `./run.sh models`.
 
 ## Testing Components
 
@@ -183,7 +181,7 @@ Should show all green checkmarks:
 - ✓ Config loaded
 - ✓ Database OK
 - ✓ FFmpeg found
-- ✓ Piper available
+- ✓ Piper available (if installed)
 
 ## Monitoring
 

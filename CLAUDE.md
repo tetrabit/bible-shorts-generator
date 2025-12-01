@@ -14,7 +14,7 @@ The system follows a sequential pipeline architecture:
 
 1. **Verse Selection** → Filters Bible verses by word count (5-18 words) to ensure <7 second duration
 2. **Background Generation** → SDXL generates themed images, composed into video with Ken Burns effect
-3. **TTS Generation** → Piper TTS creates natural speech audio from verse text
+3. **TTS Generation** → Piper TTS (external binary) creates natural speech audio from verse text
 4. **Word Alignment** → WhisperX performs forced alignment for word-level timestamps
 5. **Subtitle Rendering** → Creates overlay video with synchronized text highlighting
 6. **Video Composition** → FFmpeg merges background, audio, and subtitles into final video
@@ -25,7 +25,7 @@ The system follows a sequential pipeline architecture:
 
 **AI Models (all local, no cloud APIs):**
 - SDXL: Image generation for backgrounds
-- Piper TTS: Text-to-speech synthesis (CPU-friendly)
+- Piper TTS: Text-to-speech synthesis (requires standalone install; CPU-friendly)
 - WhisperX: Word-level timestamp extraction via forced alignment
 
 **Data Flow:**
@@ -37,7 +37,7 @@ The system follows a sequential pipeline architecture:
 - `verse_selector.py`: Random verse selection with word count filtering
 - `timing_analyzer.py`: Duration estimation (words ÷ speaking_rate)
 - `video_generator.py`: SDXL image generation + Ken Burns video creation
-- `tts_engine.py`: Piper TTS wrapper
+- `tts_engine.py`: Piper TTS wrapper (expects Piper binary on PATH)
 - `word_aligner.py`: WhisperX forced alignment wrapper
 - `subtitle_renderer.py`: Frame-by-frame subtitle overlay creation with word highlighting
 - `video_composer.py`: FFmpeg orchestration for final composite
@@ -115,7 +115,7 @@ All FFmpeg operations wrapped in `ffmpeg_utils.py` and `video_composer.py`.
 
 **Minimum**:
 - NVIDIA GPU with 12GB VRAM (RTX 3060) for SDXL
-- Piper TTS runs on CPU
+- Piper TTS (if installed) runs on CPU
 
 **CPU-only mode**:
 - Set `models.sdxl.device: "cpu"` and `models.sdxl.dtype: "float32"` in config.yaml

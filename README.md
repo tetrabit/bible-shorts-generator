@@ -5,7 +5,7 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 ## Features
 
 - **Fully Automated**: Select verses → Generate video → Upload to YouTube
-- **100% Local AI**: All models run locally (SDXL, Piper TTS, WhisperX)
+- **100% Local AI**: All models run locally (SDXL, WhisperX, Piper TTS via external install)
 - **Terminal-Only**: No UI, perfect for servers and automation
 - **Smart Verse Selection**: Filters verses by word count to ensure <7 second duration
 - **Professional Output**: Cinematic backgrounds, word-by-word subtitle highlighting
@@ -17,7 +17,7 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 **Pipeline:**
 1. Verse Selection (word count filtering)
 2. Background Generation (SDXL + Ken Burns effect)
-3. TTS Generation (Piper TTS)
+3. TTS Generation (Piper TTS binary, installed separately)
 4. Word Alignment (WhisperX forced alignment)
 5. Subtitle Rendering (word-level highlighting)
 6. Video Composition (FFmpeg)
@@ -43,10 +43,12 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 
 ### Software
 
-- Python 3.10+
+- Python 3.10+ (tested on 3.13)
 - FFmpeg
 - CUDA 12.1+ (for GPU)
 - Linux (Ubuntu/Debian recommended)
+- Piper TTS binary if you want the Piper engine (PyPI wheels are not available on Python 3.13; install from https://github.com/rhasspy/piper or use Python ≤3.12)
+- OpenAI Whisper is installed from a pinned Git commit for Python 3.13 compatibility (handled automatically by `setup.sh`)
 
 ## Installation
 
@@ -69,6 +71,7 @@ This will:
 - Initialize database
 - Download Bible data
 - Optionally download AI models (~15GB)
+- Note: Piper TTS is not installed automatically on Python 3.13. Install the Piper binary manually if you need that engine.
 
 ### 3. Configure YouTube API
 
@@ -98,7 +101,7 @@ Follow browser prompts to authorize. Credentials saved to `.env` automatically.
 Downloads:
 - Stable Diffusion XL (~14GB)
 - Whisper base model (~140MB)
-- Piper TTS voice (~30MB)
+- Piper TTS voice (~30MB) if Piper is installed on your system
 
 ## Quick Start
 
@@ -278,10 +281,8 @@ models:
 sudo apt-get install ffmpeg
 ```
 
-**3. Piper TTS Not Working**
-```bash
-pip install --upgrade piper-tts
-```
+**3. Piper TTS Not Installed/Working**
+- Install the Piper binary from https://github.com/rhasspy/piper (preferred on Python 3.13), or use Python ≤3.12 and `pip install piper-tts`, then rerun `./run.sh models`.
 
 **4. YouTube Quota Exceeded**
 - Default quota: 10,000 points/day
@@ -306,7 +307,7 @@ Tests:
 - Configuration loading
 - Database connectivity
 - FFmpeg availability
-- Piper TTS installation
+- Piper TTS availability (if installed)
 
 ## Project Structure
 
@@ -330,7 +331,7 @@ bible-shorts-generator/
 │   │   ├── verse_selector.py   # Verse selection
 │   │   ├── timing_analyzer.py  # Duration estimation
 │   │   ├── video_generator.py  # SDXL background gen
-│   │   ├── tts_engine.py       # Piper TTS
+│   │   ├── tts_engine.py       # Piper TTS wrapper (expects Piper binary)
 │   │   ├── word_aligner.py     # WhisperX alignment
 │   │   ├── subtitle_renderer.py # Subtitle overlays
 │   │   ├── video_composer.py   # FFmpeg composition
@@ -417,7 +418,7 @@ Then modify `video_generator.py` to use your theme.
 
 - **AI Models:**
   - Stable Diffusion XL by Stability AI
-  - Piper TTS
+  - Piper TTS (install separately)
   - WhisperX
 
 - **APIs:**
