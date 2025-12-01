@@ -21,8 +21,16 @@ class QwenVideoGenerator:
         self.fallback = fallback  # Optional VideoGenerator for fallback
 
     def is_available(self) -> bool:
-        """Return True if a Qwen3-VL checkout exists locally."""
-        return self.repo_dir.exists() and (self.repo_dir / "README.md").exists()
+        """
+        Return True if a Qwen3-VL checkout exists locally and importable.
+        """
+        if not (self.repo_dir.exists() and (self.repo_dir / "README.md").exists()):
+            return False
+        try:
+            __import__("qwen3_vl")
+            return True
+        except Exception:
+            return False
 
     def generate(self, prompt: str, duration: float, output_path: str) -> str:
         """
@@ -35,34 +43,37 @@ class QwenVideoGenerator:
             duration = self.max_duration
 
         if self.is_available():
-            # Placeholder command invocation; users should replace with the
-            # actual Qwen3-VL inference command for their environment.
-            cmd = [
-                "python",
-                "-m",
-                "qwen3_vl.generate_video",
-                "--text",
-                prompt,
-                "--output",
-                output_path,
-                "--duration",
-                str(duration),
-            ]
-            result = subprocess.run(
-                cmd,
-                cwd=str(self.repo_dir),
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                raise RuntimeError(
-                    f"Qwen3-VL generation failed: {result.stderr}"
+            try:
+                # Placeholder command invocation; users should replace with the
+                # actual Qwen3-VL inference command for their environment.
+                cmd = [
+                    "python",
+                    "-m",
+                    "qwen3_vl.generate_video",
+                    "--text",
+                    prompt,
+                    "--output",
+                    output_path,
+                    "--duration",
+                    str(duration),
+                ]
+                result = subprocess.run(
+                    cmd,
+                    cwd=str(self.repo_dir),
+                    capture_output=True,
+                    text=True,
                 )
-            if not Path(output_path).exists():
-                raise RuntimeError(
-                    f"Qwen3-VL did not produce output at {output_path}"
-                )
-            return output_path
+                if result.returncode != 0:
+                    raise RuntimeError(
+                        f"Qwen3-VL generation failed: {result.stderr}"
+                    )
+                if not Path(output_path).exists():
+                    raise RuntimeError(
+                        f"Qwen3-VL did not produce output at {output_path}"
+                    )
+                return output_path
+            except Exception as e:
+                print(f"Qwen3-VL unavailable or failed ({e}); falling back to SDXL.")
 
         # Fallback if Qwen3-VL not present
         if self.fallback:
