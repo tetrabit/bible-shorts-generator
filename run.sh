@@ -79,6 +79,9 @@ case "$1" in
         echo "4. Testing Piper TTS..."
         python3 -c "from src.modules.tts_engine import TTSEngine; from src.config import config; tts = TTSEngine(config); print('✓ Piper available' if tts.test_installation() else '✗ Piper not found')"
 
+        echo "5. Checking Qwen3-VL (optional)..."
+        python3 - <<'PY'\nfrom pathlib import Path\nfrom src.config import config\nrepo = Path(config.models['qwen3']['repo_dir'])\nprint('✓ Qwen3-VL repo found' if repo.exists() else '⚠ Qwen3-VL repo missing (expected at {})'.format(repo))\nPY
+
         echo ""
         echo "Basic tests complete!"
         ;;

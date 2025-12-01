@@ -59,6 +59,7 @@ echo ""
 # Create directory structure
 echo "Creating directory structure..."
 mkdir -p models/{sdxl,piper,whisper}
+mkdir -p models/qwen3-vl
 mkdir -p data/bible
 mkdir -p generated/{backgrounds,audio,timestamps,subtitles,final,uploaded}
 mkdir -p logs
@@ -83,6 +84,22 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     python3 download_models.py
 else
     echo "Skipping model download. You can run 'python3 download_models.py' later."
+fi
+echo ""
+
+# Optional: clone Qwen3-VL repository for text-to-video
+read -p "Clone Qwen3-VL repository (optional, required for qwen3 backend)? (y/n): " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if [ -d "models/qwen3-vl/.git" ]; then
+        echo "Qwen3-VL already cloned at models/qwen3-vl"
+    else
+        echo "Cloning Qwen3-VL..."
+        git clone https://github.com/QwenLM/Qwen3-VL.git models/qwen3-vl || echo "⚠ Failed to clone Qwen3-VL. Please clone manually."
+    fi
+    echo "Remember to follow Qwen3-VL instructions to download weights inside models/qwen3-vl."
+else
+    echo "Skipping Qwen3-VL clone. Set video.backend to 'sdxl' or clone later into models/qwen3-vl."
 fi
 echo ""
 

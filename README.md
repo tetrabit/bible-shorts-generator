@@ -184,6 +184,10 @@ scheduler:
 # video:
 #   skip_subtitles: true # Compose without subtitle overlay (video + audio only)
 #   # If subtitles render black, update and ensure WebM subtitles encode with alpha (fixed in latest code).
+
+### Video backends
+- `video.backend: "sdxl"` (default) uses SDXL + Ken Burns.
+- `video.backend: "qwen3"` will attempt to use a local Qwen3-VL checkout for text-to-video (set `models.qwen3.repo_dir` to the clone path). If Qwen3-VL is missing, it falls back to SDXL with a warning.
 ```
 
 ## Usage

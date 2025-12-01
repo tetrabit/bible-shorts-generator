@@ -21,6 +21,7 @@ from src.modules.tts_engine import TTSEngine
 from src.modules.word_aligner import WordAligner
 from src.modules.subtitle_renderer import SubtitleRenderer
 from src.modules.video_composer import VideoComposer
+from src.modules.qwen_video_generator import QwenVideoGenerator
 from src.modules.youtube_uploader import YouTubeUploader
 from src.utils.file_manager import archive_video, cleanup_intermediate_files
 
@@ -39,7 +40,9 @@ class BibleShortsGenerator:
         self.db = Database()
         self.verse_selector = VerseSelector(config, self.db)
         self.timing = TimingAnalyzer(config)
+        self.video_backend = config.video.get('backend', 'sdxl')
         self.video_gen = VideoGenerator(config)
+        self.qwen_video_gen = QwenVideoGenerator(config, fallback=self.video_gen)
         self.tts = TTSEngine(config)
         self.aligner = WordAligner(config)
         self.subtitle_renderer = SubtitleRenderer(config)
@@ -102,11 +105,18 @@ class BibleShortsGenerator:
             try:
                 # Step 2: Generate background video
                 task = progress.add_task("Generating background video...", total=None)
-                self.video_gen.generate(
-                    verse['text'],
-                    verse['duration'],
-                    paths['background']
-                )
+                if self.video_backend == "qwen3":
+                    self.qwen_video_gen.generate(
+                        verse['text'],
+                        verse['duration'],
+                        paths['background']
+                    )
+                else:
+                    self.video_gen.generate(
+                        verse['text'],
+                        verse['duration'],
+                        paths['background']
+                    )
                 self.db.update_video_path(video_id, 'background_path', paths['background'])
                 progress.update(task, completed=100)
 
