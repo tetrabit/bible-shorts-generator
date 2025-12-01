@@ -130,24 +130,32 @@ class BibleShortsGenerator:
                 self.db.update_video_path(video_id, 'timestamps_path', paths['timestamps'])
                 progress.update(task, completed=100)
 
-                # Step 5: Render subtitles
-                task = progress.add_task("Rendering subtitles...", total=None)
-                self.subtitle_renderer.create_subtitle_video(
-                    paths['timestamps'],
-                    verse['duration'],
-                    paths['subtitles']
-                )
-                self.db.update_video_path(video_id, 'subtitle_path', paths['subtitles'])
-                progress.update(task, completed=100)
+                # Step 5: Render subtitles (skip in debug mode)
+                if not self.config.video.get('skip_subtitles', False):
+                    task = progress.add_task("Rendering subtitles...", total=None)
+                    self.subtitle_renderer.create_subtitle_video(
+                        paths['timestamps'],
+                        verse['duration'],
+                        paths['subtitles']
+                    )
+                    self.db.update_video_path(video_id, 'subtitle_path', paths['subtitles'])
+                    progress.update(task, completed=100)
 
                 # Step 6: Compose final video
                 task = progress.add_task("Composing final video...", total=None)
-                self.composer.compose(
-                    paths['background'],
-                    paths['audio'],
-                    paths['subtitles'],
-                    paths['final']
-                )
+                if self.config.video.get('skip_subtitles', False):
+                    self.composer.compose_simple(
+                        paths['background'],
+                        paths['audio'],
+                        paths['final']
+                    )
+                else:
+                    self.composer.compose(
+                        paths['background'],
+                        paths['audio'],
+                        paths['subtitles'],
+                        paths['final']
+                    )
                 self.db.update_video_path(video_id, 'final_path', paths['final'])
                 self.db.update_video_status(video_id, 'ready')
                 progress.update(task, completed=100)

@@ -176,6 +176,13 @@ youtube:
 scheduler:
   generation_interval: "2h"
   batch_size: 3
+
+# Debug shortcuts
+# models:
+#   sdxl:
+#     skip: true        # Use placeholder background instead of SDXL
+# video:
+#   skip_subtitles: true # Compose without subtitle overlay (video + audio only)
 ```
 
 ## Usage
