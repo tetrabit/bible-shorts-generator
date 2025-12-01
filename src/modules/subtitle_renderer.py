@@ -228,19 +228,18 @@ class SubtitleRenderer:
                 if (frame_idx + 1) % 30 == 0:
                     print(f"Rendered {frame_idx + 1}/{total_frames} frames")
 
-            # Encode frames to VP9 with alpha for reliable overlay
+            # Encode frames to MOV with alpha (qtrle) for reliable overlay
+            output_mov = str(Path(output_path).with_suffix(".mov"))
             ffmpeg_args = [
                 "-framerate", str(fps),
                 "-i", str(tmp_dir / "frame_%05d.png"),
-                "-vf", "format=yuva420p",
-                "-c:v", "libvpx-vp9",
-                "-pix_fmt", "yuva420p",
-                "-auto-alt-ref", "0",  # keep alpha compatible
+                "-c:v", "qtrle",
+                "-pix_fmt", "argb",
                 "-y",
-                output_path
+                output_mov
             ]
             run_ffmpeg(ffmpeg_args, "Subtitle encoding")
-            print(f"Subtitle video saved to: {output_path}")
-            return output_path
+            print(f"Subtitle video saved to: {output_mov}")
+            return output_mov
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)

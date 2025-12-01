@@ -6,7 +6,7 @@ video:
   height: 1920
   fps: 30
   max_duration: 7
-  skip_subtitles: true  # set true to compose without subtitle overlay (debug video+audio only)
+  skip_subtitles: false  # set true to compose without subtitle overlay (debug video+audio only)
   format: "mp4"
   codec: "libx264"
   crf: 20
