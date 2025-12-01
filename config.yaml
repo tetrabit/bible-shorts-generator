@@ -1,0 +1,128 @@
+# Bible Shorts Generator Configuration
+
+# Video Settings
+video:
+  width: 1080
+  height: 1920
+  fps: 30
+  max_duration: 7
+  format: "mp4"
+  codec: "libx264"
+  crf: 20
+  preset: "fast"
+
+# Text Settings
+text:
+  max_words: 18
+  speaking_rate: 3.0  # words per second
+  font_path: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+  font_size: 72
+  font_color: [255, 255, 255]  # White
+  outline_color: [0, 0, 0]  # Black
+  outline_width: 4
+  shadow: true
+  position: "bottom"  # center, top, bottom
+  highlight_color: [255, 215, 0]  # Gold for current word
+  padding_bottom: 150  # pixels from bottom
+  max_chars_per_line: 30
+  line_spacing: 20
+
+# Bible Settings
+bible:
+  version: "KJV"  # King James Version
+  books:
+    - "Psalms"
+    - "Proverbs"
+    - "John"
+    - "Matthew"
+    - "Philippians"
+    - "Romans"
+  exclude_books: []
+  min_words: 5
+  max_words: 18
+
+# AI Models
+models:
+  sdxl:
+    model_id: "stabilityai/stable-diffusion-xl-base-1.0"
+    device: "cuda"  # or "cpu"
+    dtype: "float16"  # or "float32" for CPU
+    num_inference_steps: 25
+    guidance_scale: 7.5
+
+  tts:
+    engine: "piper"
+    voice: "en_US-lessac-medium"
+    sample_rate: 22050
+
+  whisper:
+    model_size: "base"  # tiny, base, small, medium, large
+    device: "cuda"
+    compute_type: "float16"
+
+# Prompt Templates
+prompts:
+  style: "cinematic, beautiful, ethereal, peaceful, spiritual, high quality, detailed"
+  negative: "ugly, blurry, low quality, distorted, text, watermark, signature, deformed"
+  themes:
+    default: "peaceful nature scene, soft golden lighting, cinematic composition, serene atmosphere"
+    hope: "sunrise over mountains, golden hour, rays of light breaking through clouds, uplifting atmosphere"
+    strength: "majestic mountain peaks, powerful ocean waves, dramatic landscape, inspiring vista"
+    peace: "calm waters reflecting sky, gentle breeze through trees, serene forest clearing, tranquil scene"
+    love: "warm sunset colors, soft diffused light, embracing warmth, tender atmosphere"
+    faith: "light breaking through darkness, path forward, guiding light, spiritual journey"
+    wisdom: "ancient tree, peaceful library, sacred space, contemplative atmosphere"
+
+# YouTube Settings
+youtube:
+  category_id: "22"  # People & Blogs
+  privacy: "public"  # public, private, unlisted
+  tags:
+    - "Bible"
+    - "Verse"
+    - "Shorts"
+    - "Christian"
+    - "Faith"
+    - "Scripture"
+    - "BibleVerse"
+    - "DailyVerse"
+    - "Inspiration"
+  title_template: "{verse_ref} - {first_words}... #Shorts #BibleVerse"
+  description_template: |
+    {verse_text}
+
+    📖 {verse_ref} ({bible_version})
+
+    Follow for daily Bible verses!
+
+    #BibleVerse #Scripture #Faith #Christian #Shorts #DailyVerse #Gospel #Jesus #God #Inspiration
+
+  upload_schedule:
+    enabled: true
+    times:
+      - "09:00"
+      - "15:00"
+      - "21:00"
+    timezone: "America/New_York"
+
+# Scheduling
+scheduler:
+  enabled: true
+  generation_interval: "2h"  # Generate every 2 hours
+  batch_size: 3  # Generate 3 videos per batch
+  max_queue: 10  # Keep max 10 videos ready to upload
+
+# Storage
+storage:
+  cleanup_after_upload: false  # Set to true to delete intermediate files
+  keep_final_videos: true
+  max_storage_gb: 50
+  archive_uploaded: true
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  console: true
+  file: true
+  max_size_mb: 10
+  backup_count: 5

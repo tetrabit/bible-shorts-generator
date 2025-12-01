@@ -1,0 +1,213 @@
+"""Subtitle renderer with word-level highlighting"""
+from PIL import Image, ImageDraw, ImageFont
+import cv2
+import numpy as np
+import json
+from pathlib import Path
+from typing import List, Dict, Tuple
+
+
+class SubtitleRenderer:
+    """Renders subtitle overlays with word-by-word highlighting"""
+
+    def __init__(self, config):
+        self.config = config
+        self.font = self._load_font()
+
+    def _load_font(self) -> ImageFont.FreeTypeFont:
+        """Load font for subtitles"""
+        try:
+            return ImageFont.truetype(
+                self.config.text['font_path'],
+                self.config.text['font_size']
+            )
+        except Exception:
+            # Fallback to default font
+            return ImageFont.load_default()
+
+    def get_current_words(self, words: List[Dict], time: float, window: int = 3) -> Tuple[List[str], int]:
+        """
+        Get words to display at given time with highlight index
+
+        Args:
+            words: List of word dictionaries with timestamps
+            time: Current time in seconds
+            window: Number of words to show at once
+
+        Returns:
+            (words_to_show, highlight_index): Words to display and which to highlight
+        """
+        # Find currently spoken word
+        current_idx = None
+        for idx, word in enumerate(words):
+            if word['start'] <= time <= word['end']:
+                current_idx = idx
+                break
+
+        if current_idx is None:
+            # Find nearest word
+            for idx, word in enumerate(words):
+                if word['start'] > time:
+                    current_idx = max(0, idx - 1)
+                    break
+            if current_idx is None:
+                current_idx = len(words) - 1
+
+        # Get window of words centered on current
+        start_idx = max(0, current_idx - window // 2)
+        end_idx = min(len(words), start_idx + window)
+
+        # Adjust start if we're near the end
+        if end_idx - start_idx < window:
+            start_idx = max(0, end_idx - window)
+
+        words_to_show = [w['word'] for w in words[start_idx:end_idx]]
+        highlight_idx = current_idx - start_idx
+
+        return words_to_show, highlight_idx
+
+    def render_frame(
+        self,
+        words: List[str],
+        highlight_idx: int,
+        width: int,
+        height: int
+    ) -> np.ndarray:
+        """
+        Render a single subtitle frame
+
+        Args:
+            words: List of words to display
+            highlight_idx: Index of word to highlight
+            width: Frame width
+            height: Frame height
+
+        Returns:
+            numpy array: RGBA image
+        """
+        # Create transparent image
+        img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+
+        # Join words for layout calculation
+        text = " ".join(words)
+
+        # Calculate text position
+        try:
+            bbox = draw.textbbox((0, 0), text, font=self.font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+        except Exception:
+            # Fallback for older PIL versions
+            text_width, text_height = draw.textsize(text, font=self.font)
+
+        # Position based on config
+        x = (width - text_width) // 2
+        if self.config.text['position'] == 'bottom':
+            y = height - text_height - self.config.text['padding_bottom']
+        elif self.config.text['position'] == 'top':
+            y = self.config.text['padding_bottom']
+        else:  # center
+            y = (height - text_height) // 2
+
+        # Draw each word with appropriate color
+        current_x = x
+        outline_width = self.config.text['outline_width']
+
+        for idx, word in enumerate(words):
+            # Determine color
+            if idx == highlight_idx:
+                color = tuple(self.config.text['highlight_color']) + (255,)
+            else:
+                color = tuple(self.config.text['font_color']) + (255,)
+
+            # Draw outline
+            outline_color = tuple(self.config.text['outline_color']) + (255,)
+            for adj_x in range(-outline_width, outline_width + 1):
+                for adj_y in range(-outline_width, outline_width + 1):
+                    if adj_x != 0 or adj_y != 0:
+                        draw.text(
+                            (current_x + adj_x, y + adj_y),
+                            word,
+                            font=self.font,
+                            fill=outline_color
+                        )
+
+            # Draw main text
+            draw.text((current_x, y), word, font=self.font, fill=color)
+
+            # Update x position
+            try:
+                word_bbox = draw.textbbox((0, 0), word + " ", font=self.font)
+                word_width = word_bbox[2] - word_bbox[0]
+            except Exception:
+                word_width, _ = draw.textsize(word + " ", font=self.font)
+
+            current_x += word_width
+
+        return np.array(img)
+
+    def create_subtitle_video(
+        self,
+        timestamps_path: str,
+        duration: float,
+        output_path: str
+    ) -> str:
+        """
+        Create full subtitle overlay video
+
+        Args:
+            timestamps_path: Path to timestamps JSON file
+            duration: Total video duration
+            output_path: Path to save subtitle video
+
+        Returns:
+            output_path: Path to saved video
+        """
+        # Load timestamps
+        with open(timestamps_path) as f:
+            words = json.load(f)
+
+        if not words:
+            raise ValueError("No words found in timestamps file")
+
+        # Ensure output directory exists
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        fps = self.config.video['fps']
+        total_frames = int(duration * fps)
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(
+            output_path,
+            fourcc,
+            fps,
+            (self.config.video['width'], self.config.video['height'])
+        )
+
+        print(f"Rendering {total_frames} frames of subtitles...")
+
+        for frame_idx in range(total_frames):
+            time = frame_idx / fps
+
+            # Get words to display
+            words_to_show, highlight_idx = self.get_current_words(words, time)
+
+            # Render frame
+            frame = self.render_frame(
+                words_to_show,
+                highlight_idx,
+                self.config.video['width'],
+                self.config.video['height']
+            )
+
+            # Convert RGBA to BGRA for OpenCV
+            frame_bgra = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGRA)
+            writer.write(frame_bgra)
+
+            if (frame_idx + 1) % 30 == 0:
+                print(f"Rendered {frame_idx + 1}/{total_frames} frames")
+
+        writer.release()
+        print(f"Subtitle video saved to: {output_path}")
+        return output_path

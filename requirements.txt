@@ -1,0 +1,50 @@
+# Core Dependencies
+python-dotenv==1.0.0
+pyyaml==6.0.1
+loguru==0.7.2
+rich==13.7.0
+tqdm==4.66.1
+
+# AI/ML - PyTorch (CUDA 12.1 compatible)
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.1.2
+torchvision==0.16.2
+torchaudio==2.1.2
+
+# Diffusion Models
+diffusers==0.25.0
+transformers==4.36.2
+accelerate==0.25.0
+safetensors==0.4.1
+omegaconf==2.3.0
+
+# Text-to-Speech
+piper-tts==1.2.0
+
+# Speech Recognition & Alignment
+openai-whisper==20231117
+git+https://github.com/m-bain/whisperX.git
+
+# Video/Image Processing
+opencv-python==4.9.0.80
+opencv-python-headless==4.9.0.80
+Pillow==10.2.0
+numpy==1.26.3
+imageio==2.33.1
+imageio-ffmpeg==0.4.9
+
+# Bible Data
+pythonbible==1.1.0
+requests==2.31.0
+
+# YouTube API
+google-api-python-client==2.115.0
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+
+# Scheduling & Task Management
+APScheduler==3.10.4
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
