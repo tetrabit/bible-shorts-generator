@@ -80,7 +80,15 @@ case "$1" in
         python3 -c "from src.modules.tts_engine import TTSEngine; from src.config import config; tts = TTSEngine(config); print('✓ Piper available' if tts.test_installation() else '✗ Piper not found')"
 
         echo "5. Checking Qwen3-VL (optional)..."
-        python3 - <<'PY'\nfrom pathlib import Path\nfrom src.config import config\nrepo = Path(config.models['qwen3']['repo_dir'])\nprint('✓ Qwen3-VL repo found' if repo.exists() else '⚠ Qwen3-VL repo missing (expected at {})'.format(repo))\nPY
+        python3 - <<'PY'
+from pathlib import Path
+from src.config import config
+repo = Path(config.models['qwen3']['repo_dir'])
+if repo.exists():
+    print(f"✓ Qwen3-VL repo found at {repo}")
+else:
+    print(f"⚠ Qwen3-VL repo missing (expected at {repo})")
+PY
 
         echo ""
         echo "Basic tests complete!"
