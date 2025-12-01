@@ -106,15 +106,19 @@ echo ""
 
 # Best-effort install of Qwen3-VL python package (dependencies/weights may still be needed)
 if [ -d "models/qwen3-vl" ]; then
-    echo "Installing Qwen3-VL Python package (editable)..."
-    set +e
-    (cd models/qwen3-vl && pip install -e .)
-    install_status=$?
-    set -e
-    if [ $install_status -ne 0 ]; then
-        echo "⚠ Qwen3-VL package install had issues. Check requirements in models/qwen3-vl/README.md."
+    if [ -f "models/qwen3-vl/setup.py" ] || [ -f "models/qwen3-vl/pyproject.toml" ]; then
+        echo "Installing Qwen3-VL Python package (editable)..."
+        set +e
+        (cd models/qwen3-vl && pip install -e .)
+        install_status=$?
+        set -e
+        if [ $install_status -ne 0 ]; then
+            echo "⚠ Qwen3-VL package install had issues. Check requirements in models/qwen3-vl/README.md."
+        else
+            echo "✓ Qwen3-VL package installed (editable)"
+        fi
     else
-        echo "✓ Qwen3-VL package installed (editable)"
+        echo "⚠ Qwen3-VL repo has no setup.py/pyproject.toml; follow its README to install requirements and weights manually."
     fi
     echo "Remember to download Qwen3-VL weights per their README."
 fi
