@@ -87,19 +87,36 @@ else
 fi
 echo ""
 
-# Optional: clone Qwen3-VL repository for text-to-video
-read -p "Clone Qwen3-VL repository (optional, required for qwen3 backend)? (y/n): " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if [ -d "models/qwen3-vl/.git" ]; then
-        echo "Qwen3-VL already cloned at models/qwen3-vl"
-    else
-        echo "Cloning Qwen3-VL..."
-        git clone https://github.com/QwenLM/Qwen3-VL.git models/qwen3-vl || echo "⚠ Failed to clone Qwen3-VL. Please clone manually."
-    fi
-    echo "Remember to follow Qwen3-VL instructions to download weights inside models/qwen3-vl."
+# Clone Qwen3-VL repository for text-to-video backend
+echo "Cloning Qwen3-VL (required for qwen3 backend)..."
+if [ -d "models/qwen3-vl/.git" ]; then
+    echo "✓ Qwen3-VL already present at models/qwen3-vl"
 else
-    echo "Skipping Qwen3-VL clone. Set video.backend to 'sdxl' or clone later into models/qwen3-vl."
+    set +e
+    git clone https://github.com/QwenLM/Qwen3-VL.git models/qwen3-vl
+    clone_status=$?
+    set -e
+    if [ $clone_status -ne 0 ]; then
+        echo "⚠ Failed to clone Qwen3-VL. Please clone manually into models/qwen3-vl."
+    else
+        echo "✓ Qwen3-VL cloned to models/qwen3-vl"
+    fi
+fi
+echo ""
+
+# Best-effort install of Qwen3-VL python package (dependencies/weights may still be needed)
+if [ -d "models/qwen3-vl" ]; then
+    echo "Installing Qwen3-VL Python package (editable)..."
+    set +e
+    (cd models/qwen3-vl && pip install -e .)
+    install_status=$?
+    set -e
+    if [ $install_status -ne 0 ]; then
+        echo "⚠ Qwen3-VL package install had issues. Check requirements in models/qwen3-vl/README.md."
+    else
+        echo "✓ Qwen3-VL package installed (editable)"
+    fi
+    echo "Remember to download Qwen3-VL weights per their README."
 fi
 echo ""
 

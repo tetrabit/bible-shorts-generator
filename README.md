@@ -190,7 +190,7 @@ scheduler:
 - `video.backend: "qwen3"` will attempt to use a local Qwen3-VL checkout for text-to-video (set `models.qwen3.repo_dir` to the clone path). If Qwen3-VL is missing, it falls back to SDXL with a warning.
 
 To use Qwen3-VL:
-1. Clone https://github.com/QwenLM/Qwen3-VL into `models/qwen3-vl` (or update `models.qwen3.repo_dir` accordingly).
+1. Setup will attempt to clone https://github.com/QwenLM/Qwen3-VL into `models/qwen3-vl` and pip install it editable. If cloning/installation fails, clone manually into `models/qwen3-vl` and install per README.
 2. Follow Qwen3-VL’s README to download weights and install its dependencies inside your virtualenv.
 3. Set `video.backend: "qwen3"` in `config.yaml`.
 4. Run `./run.sh test` to confirm the repo is detected; generation will fail if Qwen3-VL is not importable (no fallback).
