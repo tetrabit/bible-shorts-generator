@@ -1,10 +1,13 @@
 """Subtitle renderer with word-level highlighting"""
-from PIL import Image, ImageDraw, ImageFont
-import cv2
-import numpy as np
 import json
 from pathlib import Path
 from typing import List, Dict, Tuple
+
+import cv2
+import numpy as np
+import requests
+from PIL import Image, ImageDraw, ImageFont
+from loguru import logger
 
 
 class SubtitleRenderer:
@@ -15,15 +18,36 @@ class SubtitleRenderer:
         self.font = self._load_font()
 
     def _load_font(self) -> ImageFont.FreeTypeFont:
-        """Load font for subtitles"""
+        """Load font for subtitles, downloading if missing."""
+        font_path = Path(self.config.text['font_path'])
+
+        if not font_path.exists():
+            logger.warning(f"Configured font not found at {font_path}. Attempting download...")
+            font_path = self._download_font(font_path)
+
         try:
-            return ImageFont.truetype(
-                self.config.text['font_path'],
-                self.config.text['font_size']
-            )
-        except Exception:
-            # Fallback to default font
+            return ImageFont.truetype(str(font_path), self.config.text['font_size'])
+        except Exception as exc:
+            logger.error(f"Failed to load font at {font_path}: {exc}. Falling back to default font.")
             return ImageFont.load_default()
+
+    def _download_font(self, target_path: Path) -> Path:
+        """
+        Download a fallback DejaVuSans-Bold font if the configured font is missing.
+        The downloaded file is saved to the specified target path.
+        """
+        # Use DejaVuSans-Bold as a permissive default
+        url = "https://raw.githubusercontent.com/dejavu-fonts/dejavu-fonts/version_2_37/ttf/DejaVuSans-Bold.ttf"
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            target_path.write_bytes(resp.content)
+            logger.info(f"Downloaded fallback font to {target_path}")
+        except Exception as exc:
+            logger.error(f"Failed to download fallback font from {url}: {exc}")
+        return target_path
 
     def get_current_words(self, words: List[Dict], time: float, window: int = 3) -> Tuple[List[str], int]:
         """

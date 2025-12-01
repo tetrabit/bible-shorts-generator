@@ -11,6 +11,7 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 - **Professional Output**: Cinematic backgrounds, word-by-word subtitle highlighting
 - **Scheduled Uploads**: Auto-generate and upload on configurable schedule
 - **Database Tracking**: SQLite tracks all videos, uploads, and statistics
+- **Self-Healing Assets**: Auto-download Piper voices and fallback subtitle font when missing
 
 ## System Architecture
 
@@ -72,6 +73,7 @@ This will:
 - Download Bible data
 - Optionally download AI models (~15GB)
 - Note: Piper TTS is not installed automatically on Python 3.13. Install the Piper binary manually if you need that engine.
+  - Piper voices are downloaded automatically on first use to `models/piper/<voice>/` via Hugging Face.
 
 ### 3. Configure YouTube API
 
@@ -149,6 +151,8 @@ video:
 text:
   max_words: 18  # Ensures <7s duration
   speaking_rate: 3.0  # words/second
+  # The renderer will download DejaVuSans-Bold to this path if the file is missing.
+  font_path: "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 bible:
   version: "KJV"

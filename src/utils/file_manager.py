@@ -1,7 +1,7 @@
 """File management utilities"""
 from pathlib import Path
 import shutil
-from typing import List
+from typing import Dict, List
 import os
 
 

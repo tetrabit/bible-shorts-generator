@@ -19,8 +19,10 @@ class VerseSelector:
 
     def _get_allowed_books(self) -> list:
         """Get list of allowed Bible book enums"""
-        allowed_names = self.config.bible['books']
-        excluded_names = self.config.bible.get('exclude_books', [])
+        # Normalize names to the enum naming style used by pythonbible (UPPER_CASE_WITH_UNDERSCORES)
+        normalize = lambda name: name.replace(" ", "_").upper()
+        allowed_names = {normalize(name) for name in self.config.bible['books']}
+        excluded_names = {normalize(name) for name in self.config.bible.get('exclude_books', [])}
 
         # Convert book names to pythonbible Book enums
         allowed_books = []
@@ -28,6 +30,10 @@ class VerseSelector:
             book_name = book_enum.name
             if book_name in allowed_names and book_name not in excluded_names:
                 allowed_books.append(book_enum)
+
+        # If nothing matched, default to all books rather than failing
+        if not allowed_books:
+            allowed_books = [b for b in bible.Book if b.name not in excluded_names]
 
         return allowed_books
 

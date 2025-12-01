@@ -13,8 +13,9 @@ torchaudio==2.8.0
 
 # Diffusion Models
 diffusers==0.25.0
+huggingface-hub==0.24.0
 transformers==4.48.0
-accelerate==0.25.0
+accelerate==0.26.0
 safetensors==0.4.1
 omegaconf==2.3.0
 
@@ -23,8 +24,8 @@ git+https://github.com/openai/whisper.git@c0d2f624c09dc18e709e37c2ad90c039a4eb72
 git+https://github.com/m-bain/whisperX.git
 
 # Video/Image Processing
-opencv-python==4.9.0.80
-opencv-python-headless==4.9.0.80
+opencv-python==4.10.0.84
+opencv-python-headless==4.10.0.84
 Pillow==11.3.0
 numpy==2.2.6
 imageio==2.33.1
