@@ -94,7 +94,7 @@ class BibleShortsGenerator:
                 'background': f"generated/backgrounds/{verse['id']}.mp4",
                 'audio': f"generated/audio/{verse['id']}.wav",
                 'timestamps': f"generated/timestamps/{verse['id']}.json",
-                'subtitles': f"generated/subtitles/{verse['id']}.mp4",
+                'subtitles': f"generated/subtitles/{verse['id']}.webm",
                 'final': f"generated/final/{verse['id']}.mp4"
             }
 

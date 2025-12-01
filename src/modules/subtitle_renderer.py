@@ -8,6 +8,9 @@ import numpy as np
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from loguru import logger
+import shutil
+import tempfile
+from ..utils.ffmpeg_utils import run_ffmpeg
 
 
 class SubtitleRenderer:
@@ -201,37 +204,41 @@ class SubtitleRenderer:
         fps = self.config.video['fps']
         total_frames = int(duration * fps)
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        writer = cv2.VideoWriter(
-            output_path,
-            fourcc,
-            fps,
-            (self.config.video['width'], self.config.video['height'])
-        )
+        tmp_dir = Path(tempfile.mkdtemp(prefix="subs_frames_"))
+        try:
+            print(f"Rendering {total_frames} frames of subtitles...")
 
-        print(f"Rendering {total_frames} frames of subtitles...")
+            for frame_idx in range(total_frames):
+                time = frame_idx / fps
 
-        for frame_idx in range(total_frames):
-            time = frame_idx / fps
+                # Get words to display
+                words_to_show, highlight_idx = self.get_current_words(words, time)
 
-            # Get words to display
-            words_to_show, highlight_idx = self.get_current_words(words, time)
+                # Render frame
+                frame = self.render_frame(
+                    words_to_show,
+                    highlight_idx,
+                    self.config.video['width'],
+                    self.config.video['height']
+                )
 
-            # Render frame
-            frame = self.render_frame(
-                words_to_show,
-                highlight_idx,
-                self.config.video['width'],
-                self.config.video['height']
-            )
+                frame_path = tmp_dir / f"frame_{frame_idx:05d}.png"
+                Image.fromarray(frame).save(frame_path)
 
-            # Convert RGBA to BGRA for OpenCV
-            frame_bgra = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGRA)
-            writer.write(frame_bgra)
+                if (frame_idx + 1) % 30 == 0:
+                    print(f"Rendered {frame_idx + 1}/{total_frames} frames")
 
-            if (frame_idx + 1) % 30 == 0:
-                print(f"Rendered {frame_idx + 1}/{total_frames} frames")
-
-        writer.release()
-        print(f"Subtitle video saved to: {output_path}")
-        return output_path
+            # Encode frames to VP9 with alpha for reliable overlay
+            ffmpeg_args = [
+                "-framerate", str(fps),
+                "-i", str(tmp_dir / "frame_%05d.png"),
+                "-c:v", "libvpx-vp9",
+                "-pix_fmt", "yuva420p",
+                "-y",
+                output_path
+            ]
+            run_ffmpeg(ffmpeg_args, "Subtitle encoding")
+            print(f"Subtitle video saved to: {output_path}")
+            return output_path
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)

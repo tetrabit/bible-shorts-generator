@@ -165,6 +165,8 @@ models:
   sdxl:
     device: "cuda"  # or "cpu"
     dtype: "float16"
+    skip: false  # Set to true to use a placeholder background for fast, non-SDXL testing
+    skip: false  # Set to true to skip SDXL and use a placeholder background for fast testing
 
 youtube:
   privacy: "public"

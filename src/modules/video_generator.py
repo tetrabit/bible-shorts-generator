@@ -17,6 +17,7 @@ class VideoGenerator:
         self.pipe = None
         self.device = config.models['sdxl']['device']
         self.dtype = torch.float16 if config.models['sdxl']['dtype'] == 'float16' else torch.float32
+        self.skip_sdxl = config.models['sdxl'].get('skip', False)
 
     def load_model(self):
         """Load SDXL model (lazy loading)"""
@@ -208,6 +209,10 @@ class VideoGenerator:
         Returns:
             output_path: Path to saved video
         """
+        if self.skip_sdxl:
+            print("SDXL skipped (testing mode). Creating placeholder background...")
+            return self._generate_placeholder_video(duration, output_path)
+
         print("Generating background video...")
 
         # Generate prompt
@@ -231,10 +236,36 @@ class VideoGenerator:
         if self.pipe is not None:
             # Move back to CPU to release VRAM before dropping
             try:
-                self.pipe.to("cpu")
+                self.pipe.to(torch_device="cpu", torch_dtype=torch.float32)
             except Exception:
                 pass
             del self.pipe
             self.pipe = None
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+    def _generate_placeholder_video(self, duration: float, output_path: str) -> str:
+        """Create a simple solid-color placeholder video for testing without SDXL."""
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+        fps = self.config.video['fps']
+        total_frames = int(duration * fps)
+        width = self.config.video['width']
+        height = self.config.video['height']
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+        if not writer.isOpened():
+            raise RuntimeError(f"Failed to open placeholder video writer at {output_path}")
+
+        # Soft teal placeholder with slight gradient noise to avoid total flatness
+        base_color = np.array([180, 220, 210], dtype=np.uint8)  # BGR
+        noise = np.random.randint(-6, 6, size=(height, width, 3), dtype=np.int16)
+        frame_base = np.clip(base_color + noise, 0, 255).astype(np.uint8)
+
+        for _ in range(total_frames):
+            writer.write(frame_base)
+
+        writer.release()
+        print(f"Placeholder background saved to: {output_path}")
+        return output_path
