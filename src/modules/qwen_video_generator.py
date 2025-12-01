@@ -5,6 +5,7 @@ from typing import Optional
 
 import numpy as np
 import cv2
+import sys
 
 
 class QwenVideoGenerator:
@@ -27,6 +28,7 @@ class QwenVideoGenerator:
         if not (self.repo_dir.exists() and (self.repo_dir / "README.md").exists()):
             return False
         try:
+            self._ensure_repo_on_path()
             __import__("qwen3_vl")
             return True
         except Exception:
@@ -75,6 +77,12 @@ class QwenVideoGenerator:
                 f"Qwen3-VL did not produce output at {output_path}"
             )
         return output_path
+
+    def _ensure_repo_on_path(self):
+        """Add Qwen3-VL repo to sys.path for module discovery."""
+        repo_str = str(self.repo_dir.resolve())
+        if repo_str not in sys.path:
+            sys.path.insert(0, repo_str)
 
     def _generate_placeholder(self, duration: float, output_path: str) -> str:
         """Generate a simple colored placeholder video."""
