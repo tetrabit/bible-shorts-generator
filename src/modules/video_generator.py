@@ -39,7 +39,12 @@ class VideoGenerator:
 
         # Enable memory optimizations
         if self.device == "cuda":
-            self.pipe.enable_attention_slicing()
+            # Offload layers between calls to keep VRAM low
+            try:
+                self.pipe.enable_sequential_cpu_offload()
+            except Exception:
+                # Fallback to attention slicing if offload unsupported
+                self.pipe.enable_attention_slicing()
             try:
                 self.pipe.enable_xformers_memory_efficient_attention()
             except Exception:
@@ -101,17 +106,22 @@ class VideoGenerator:
             # Use different seeds for variety
             generator = torch.Generator(device=self.device).manual_seed(random.randint(0, 2**32 - 1))
 
-            image = self.pipe(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                num_inference_steps=self.config.models['sdxl']['num_inference_steps'],
-                guidance_scale=self.config.models['sdxl']['guidance_scale'],
-                width=self.config.video['width'],
-                height=self.config.video['height'],
-                generator=generator
-            ).images[0]
+            with torch.inference_mode():
+                image = self.pipe(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    num_inference_steps=self.config.models['sdxl']['num_inference_steps'],
+                    guidance_scale=self.config.models['sdxl']['guidance_scale'],
+                    width=self.config.video['width'],
+                    height=self.config.video['height'],
+                    generator=generator
+                ).images[0]
 
             images.append(image)
+
+            # Nudge CUDA allocator to release cached blocks between generations
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         return images
 
