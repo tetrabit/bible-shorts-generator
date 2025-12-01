@@ -313,6 +313,10 @@ bible:
 - Ensure `models.sdxl.device: "cuda"` in `config.yaml`.
 - The model now stays on GPU while generating and is moved back to CPU after each batch to free VRAM. If you disabled CUDA elsewhere, re-enable it and restart.
 
+**8. Final video is black with subtitles only**
+- Subtitles are encoded to WebM (VP9 with alpha) and overlaid with `overlay=...:format=auto`. Update to the latest code if you see black backgrounds.
+- If you’re testing without SDXL, set `models.sdxl.skip: true` to use a placeholder background.
+
 ### Testing Components
 
 ```bash

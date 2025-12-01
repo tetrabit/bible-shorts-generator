@@ -39,7 +39,7 @@ class VideoComposer:
             "-i", subtitle_path,           # Input 1: Subtitle overlay
             "-i", audio_path,              # Input 2: Audio
             "-filter_complex",
-            "[0:v][1:v]overlay=0:0[outv]",  # Overlay subtitles on background
+            "[0:v][1:v]overlay=0:0:format=auto[outv]",  # Overlay subtitles on background
             "-map", "[outv]",              # Use overlaid video
             "-map", "2:a",                 # Use audio from third input
             "-c:v", self.config.video['codec'],
