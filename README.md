@@ -193,7 +193,7 @@ To use Qwen3-VL:
 1. Clone https://github.com/QwenLM/Qwen3-VL into `models/qwen3-vl` (or update `models.qwen3.repo_dir` accordingly).
 2. Follow Qwen3-VL’s README to download weights and install its dependencies inside your virtualenv.
 3. Set `video.backend: "qwen3"` in `config.yaml`.
-4. Run `./run.sh test` to confirm the repo is detected, then generate normally.
+4. Run `./run.sh test` to confirm the repo is detected; generation will fail if Qwen3-VL is not importable (no fallback).
 ```
 
 ## Usage
