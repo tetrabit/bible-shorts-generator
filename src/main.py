@@ -117,11 +117,16 @@ class BibleShortsGenerator:
 
                 # Step 4: Extract word timestamps
                 task = progress.add_task("Extracting word timings...", total=None)
-                self.aligner.align(
-                    paths['audio'],
-                    verse['text'],
-                    paths['timestamps']
-                )
+                try:
+                    self.aligner.align(
+                        paths['audio'],
+                        verse['text'],
+                        paths['timestamps']
+                    )
+                finally:
+                    # Free WhisperX models from GPU/CPU memory between videos
+                    self.aligner.unload_models()
+
                 self.db.update_video_path(video_id, 'timestamps_path', paths['timestamps'])
                 progress.update(task, completed=100)
 

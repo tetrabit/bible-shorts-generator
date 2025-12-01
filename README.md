@@ -12,6 +12,7 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 - **Scheduled Uploads**: Auto-generate and upload on configurable schedule
 - **Database Tracking**: SQLite tracks all videos, uploads, and statistics
 - **Self-Healing Assets**: Auto-download Piper voices and fallback subtitle font when missing
+- **Memory Friendly**: Diffusion and WhisperX models are loaded lazily and unloaded after use to free GPU RAM
 
 ## System Architecture
 

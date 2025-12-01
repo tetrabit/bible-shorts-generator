@@ -97,10 +97,12 @@ class WordAligner:
 
     def unload_models(self):
         """Unload models to free memory"""
-        del self.model
-        del self.align_model
-        self.model = None
-        self.align_model = None
+        if self.model is not None:
+            del self.model
+            self.model = None
+        if self.align_model is not None:
+            del self.align_model
+            self.align_model = None
         self.metadata = None
 
         import torch

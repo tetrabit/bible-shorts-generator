@@ -210,11 +210,15 @@ class VideoGenerator:
         prompt = self.generate_prompt(verse_text)
         print(f"Prompt: {prompt}")
 
-        # Generate images
-        images = self.generate_images(prompt, num_images=4)
+        try:
+            # Generate images
+            images = self.generate_images(prompt, num_images=4)
 
-        # Create video with Ken Burns effect
-        video_path = self.create_ken_burns_video(images, duration, output_path)
+            # Create video with Ken Burns effect
+            video_path = self.create_ken_burns_video(images, duration, output_path)
+        finally:
+            # Always unload to free GPU memory for subsequent steps
+            self.unload_model()
 
         return video_path
 
@@ -223,5 +227,5 @@ class VideoGenerator:
         if self.pipe is not None:
             del self.pipe
             self.pipe = None
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
