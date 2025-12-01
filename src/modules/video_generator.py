@@ -37,14 +37,8 @@ class VideoGenerator:
 
         self.pipe.to(self.device)
 
-        # Enable memory optimizations
+        # Use GPU fully during generation, but avoid keeping VRAM pinned after runs
         if self.device == "cuda":
-            # Offload layers between calls to keep VRAM low
-            try:
-                self.pipe.enable_sequential_cpu_offload()
-            except Exception:
-                # Fallback to attention slicing if offload unsupported
-                self.pipe.enable_attention_slicing()
             try:
                 self.pipe.enable_xformers_memory_efficient_attention()
             except Exception:
@@ -235,6 +229,11 @@ class VideoGenerator:
     def unload_model(self):
         """Unload model to free memory"""
         if self.pipe is not None:
+            # Move back to CPU to release VRAM before dropping
+            try:
+                self.pipe.to("cpu")
+            except Exception:
+                pass
             del self.pipe
             self.pipe = None
         if torch.cuda.is_available():

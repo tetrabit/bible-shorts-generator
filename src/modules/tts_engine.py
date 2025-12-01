@@ -1,4 +1,5 @@
 """Text-to-Speech engine using Piper TTS"""
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
@@ -84,6 +85,13 @@ class TTSEngine:
         if model_path.exists() and config_path.exists():
             return model_path, config_path
 
+        # Handle cases where files were downloaded into nested folders
+        existing_model, existing_config = self._find_existing_files()
+        if existing_model and existing_config:
+            model_path = self._flatten_download(existing_model, model_path)
+            config_path = self._flatten_download(existing_config, config_path)
+            return model_path, config_path
+
         try:
             # Derive repository path for the voice inside rhasspy/piper-voices
             lang_code, speaker, quality = self._parse_voice_id()
@@ -94,18 +102,23 @@ class TTSEngine:
             local_dir = model_path.parent
             local_dir.mkdir(parents=True, exist_ok=True)
 
-            hf_hub_download(
+            downloaded_model = hf_hub_download(
                 repo_id="rhasspy/piper-voices",
                 filename=f"{base_path}/{self.voice}.onnx",
                 local_dir=str(local_dir),
                 local_dir_use_symlinks=False,
             )
-            hf_hub_download(
+            downloaded_config = hf_hub_download(
                 repo_id="rhasspy/piper-voices",
                 filename=f"{base_path}/{self.voice}.onnx.json",
                 local_dir=str(local_dir),
                 local_dir_use_symlinks=False,
             )
+
+            # Hugging Face preserves the repo folder structure; move files to the
+            # expected flat layout so Piper can find them.
+            model_path = self._flatten_download(downloaded_model, model_path)
+            config_path = self._flatten_download(downloaded_config, config_path)
         except Exception as e:
             raise Exception(
                 f"Piper voice download failed for {self.voice}: {e}"
@@ -130,6 +143,36 @@ class TTSEngine:
         speaker = parts[1] if len(parts) > 1 else "lessac"
         quality = parts[2] if len(parts) > 2 else "medium"
         return lang_code, speaker, quality
+
+    def _find_existing_files(self) -> Tuple[Optional[Path], Optional[Path]]:
+        """Look for voice files anywhere under the voice directory."""
+        voice_dir = self.models_dir / self.voice
+        existing_model = next(
+            voice_dir.rglob(f"{self.voice}.onnx"), None
+        )
+        existing_config = next(
+            voice_dir.rglob(f"{self.voice}.onnx.json"), None
+        )
+        return existing_model, existing_config
+
+    def _flatten_download(self, downloaded_path: str, target_path: Path) -> Path:
+        """
+        Move a downloaded file from nested Hugging Face folders into the flat
+        layout Piper expects (voice_dir/<voice>.onnx[.json]).
+        """
+        source = Path(downloaded_path)
+        if source.resolve() == target_path.resolve():
+            return target_path
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target_path)
+        try:
+            source.unlink()
+        except OSError:
+            # Best-effort cleanup; not fatal if removal fails
+            pass
+
+        return target_path
 
     def test_installation(self) -> bool:
         """Test if Piper is installed and working"""

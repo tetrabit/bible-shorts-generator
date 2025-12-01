@@ -1,8 +1,11 @@
 """Word-level timestamp alignment using WhisperX"""
-import whisperx
 import json
 from pathlib import Path
 from typing import List, Dict
+
+import whisperx
+import torch
+from omegaconf import dictconfig, listconfig
 
 
 class WordAligner:
@@ -15,6 +18,7 @@ class WordAligner:
         self.metadata = None
         self.device = config.models['whisper']['device']
         self.compute_type = config.models['whisper']['compute_type']
+        self._register_safe_globals()
 
     def load_model(self):
         """Load WhisperX model (lazy loading)"""
@@ -105,6 +109,19 @@ class WordAligner:
             self.align_model = None
         self.metadata = None
 
-        import torch
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+
+    def _register_safe_globals(self):
+        """
+        Torch 2.6+ defaults to weights_only loading. WhisperX checkpoints rely on
+        OmegaConf objects, so we allowlist them to avoid unsafe-load errors.
+        """
+        try:
+            torch.serialization.add_safe_globals([
+                listconfig.ListConfig,
+                dictconfig.DictConfig,
+            ])
+        except Exception:
+            # Best-effort; if this fails we still proceed and let upstream handle errors
+            pass

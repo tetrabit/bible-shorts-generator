@@ -12,7 +12,7 @@ Automated system for creating YouTube Shorts (vertical 1080x1920 videos, <7 seco
 - **Scheduled Uploads**: Auto-generate and upload on configurable schedule
 - **Database Tracking**: SQLite tracks all videos, uploads, and statistics
 - **Self-Healing Assets**: Auto-download Piper voices and fallback subtitle font when missing
-- **Memory Friendly**: Diffusion and WhisperX models are loaded lazily and unloaded after use to free GPU RAM
+- **Memory Friendly**: Diffusion and WhisperX models are loaded lazily, use GPU during runs, and are unloaded after use to free VRAM
 
 ## System Architecture
 
@@ -288,6 +288,7 @@ sudo apt-get install ffmpeg
 
 **3. Piper TTS Not Installed/Working**
 - Install the Piper binary from https://github.com/rhasspy/piper (preferred on Python 3.13), or use Python ≤3.12 and `pip install piper-tts`, then rerun `./run.sh models`.
+- Voices are stored in `models/piper/<voice>/`. If a download lands in nested folders (Hugging Face layout), the app will flatten it automatically on next run.
 
 **4. YouTube Quota Exceeded**
 - Default quota: 10,000 points/day
@@ -301,6 +302,14 @@ sudo apt-get install ffmpeg
 bible:
   max_words: 22  # Allow longer verses
 ```
+
+**6. Torch 2.6 `weights_only` / OmegaConf errors**
+- Update to the latest code; WhisperX loads now allowlist OmegaConf configs.
+- If you still see the error, remove old WhisperX checkpoints and rerun so fresh, safe globals are applied.
+
+**7. SDXL not using GPU**
+- Ensure `models.sdxl.device: "cuda"` in `config.yaml`.
+- The model now stays on GPU while generating and is moved back to CPU after each batch to free VRAM. If you disabled CUDA elsewhere, re-enable it and restart.
 
 ### Testing Components
 
