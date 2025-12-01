@@ -183,6 +183,7 @@ scheduler:
 #     skip: true        # Use placeholder background instead of SDXL
 # video:
 #   skip_subtitles: true # Compose without subtitle overlay (video + audio only)
+#   # If subtitles render black, update and ensure WebM subtitles encode with alpha (fixed in latest code).
 ```
 
 ## Usage

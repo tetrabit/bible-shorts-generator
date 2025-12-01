@@ -223,7 +223,7 @@ class SubtitleRenderer:
                 )
 
                 frame_path = tmp_dir / f"frame_{frame_idx:05d}.png"
-                Image.fromarray(frame).save(frame_path)
+                Image.fromarray(frame, mode="RGBA").save(frame_path)
 
                 if (frame_idx + 1) % 30 == 0:
                     print(f"Rendered {frame_idx + 1}/{total_frames} frames")
@@ -232,8 +232,10 @@ class SubtitleRenderer:
             ffmpeg_args = [
                 "-framerate", str(fps),
                 "-i", str(tmp_dir / "frame_%05d.png"),
+                "-vf", "format=yuva420p",
                 "-c:v", "libvpx-vp9",
                 "-pix_fmt", "yuva420p",
+                "-auto-alt-ref", "0",  # keep alpha compatible
                 "-y",
                 output_path
             ]
