@@ -191,7 +191,7 @@ scheduler:
 
 To use Qwen3-VL:
 1. Setup will attempt to clone https://github.com/QwenLM/Qwen3-VL into `models/qwen3-vl`. If cloning fails, clone manually into `models/qwen3-vl`.
-2. The upstream repo currently lacks `setup.py`/`pyproject`; follow Qwen3-VL’s README to install its requirements and download weights inside your virtualenv (pip install -e won’t work out of the box).
+2. Setup installs `models/qwen3-vl/requirements.txt` if present. If no `setup.py`/`pyproject` is provided, setup adds the repo to Python path via a `.pth` file. You still need to follow Qwen3-VL’s README to install any remaining requirements and download weights inside your virtualenv.
 3. Set `video.backend: "qwen3"` in `config.yaml`.
 4. Run `./run.sh test` to confirm the repo is detected; generation will fail if Qwen3-VL is not importable (no fallback).
 ```

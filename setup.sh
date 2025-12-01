@@ -106,6 +106,20 @@ echo ""
 
 # Best-effort install of Qwen3-VL python package (dependencies/weights may still be needed)
 if [ -d "models/qwen3-vl" ]; then
+    # Install requirements if present
+    if [ -f "models/qwen3-vl/requirements.txt" ]; then
+        echo "Installing Qwen3-VL requirements..."
+        set +e
+        pip install -r models/qwen3-vl/requirements.txt
+        req_status=$?
+        set -e
+        if [ $req_status -ne 0 ]; then
+            echo "⚠ Qwen3-VL requirements install had issues. Check models/qwen3-vl/requirements.txt manually."
+        else
+            echo "✓ Qwen3-VL requirements installed"
+        fi
+    fi
+
     if [ -f "models/qwen3-vl/setup.py" ] || [ -f "models/qwen3-vl/pyproject.toml" ]; then
         echo "Installing Qwen3-VL Python package (editable)..."
         set +e
@@ -118,7 +132,16 @@ if [ -d "models/qwen3-vl" ]; then
             echo "✓ Qwen3-VL package installed (editable)"
         fi
     else
-        echo "⚠ Qwen3-VL repo has no setup.py/pyproject.toml; follow its README to install requirements and weights manually."
+        echo "Qwen3-VL repo has no setup.py/pyproject.toml; adding repo to Python path via .pth..."
+        python3 - <<'PY'
+import site
+from pathlib import Path
+repo = Path("models/qwen3-vl").resolve()
+site_dir = Path(site.getsitepackages()[0])
+pth = site_dir / "qwen3_vl_local.pth"
+pth.write_text(str(repo))
+print(f"✓ Added {repo} to sys.path via {pth}")
+PY
     fi
     echo "Remember to download Qwen3-VL weights per their README."
 fi
