@@ -323,6 +323,7 @@ bible:
 **8. Final video is black with subtitles only**
 - Subtitles are encoded to WebM (VP9 with alpha) and overlaid with `overlay=...:format=auto`. Update to the latest code if you see black backgrounds.
 - If you’re testing without SDXL, set `models.sdxl.skip: true` to use a placeholder background.
+- If you just need to test background + audio, set `video.skip_subtitles: true` to bypass subtitle rendering/overlay.
 
 ### Testing Components
 

@@ -35,6 +35,7 @@ class BibleShortsGenerator:
         logger.info("Initializing Bible Shorts Generator...")
 
         # Initialize components
+        self.config = config
         self.db = Database()
         self.verse_selector = VerseSelector(config, self.db)
         self.timing = TimingAnalyzer(config)
