@@ -50,7 +50,7 @@ models:
     model_dir: "models/wan2.1-weights"  # Downloaded model weights
     size: "1.3B"  # Use "14B" only if you have a high-end GPU and matching weights
     max_duration: 5  # seconds
-    resolution: "832*480"  # 1.3B supports 480*832 or 832*480; 1280*720 is for 14B
+    resolution: "480*832"  # 1.3B supports 480*832 (vertical) or 832*480 (horizontal); 14B adds 720*1280/1280*720
     offload_model: true  # Memory optimization (recommended)
     sample_shift: 8
     sample_guide_scale: 6

@@ -53,7 +53,7 @@ video:
 models:
   wan:
     size: "1.3B"
-    resolution: "832*480"
+    resolution: "480*832"  # vertical for Shorts (use 832*480 for horizontal)
     offload_model: true  # Memory optimization
 ```
 
@@ -68,7 +68,7 @@ models:
 **Wan2.1-T2V-1.3B (Consumer GPU):**
 - VRAM: 8GB minimum
 - Generation Time: ~4 minutes per 5-second video (on RTX 4090)
-- Resolution: 480p (832x480)
+- Resolution: 480p (480x832 vertical for Shorts; 832x480 horizontal)
 - Quality: Good for social media shorts
 
 **Wan2.1-T2V-14B (High-End GPU):**

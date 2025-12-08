@@ -142,12 +142,12 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
             1)
                 MODEL_ID="Wan-AI/Wan2.1-T2V-1.3B"
                 MODEL_SIZE="1.3B"
-                RESOLUTION="832*480"
+                RESOLUTION="480*832"
                 ;;
             2)
                 MODEL_ID="Wan-AI/Wan2.1-T2V-14B"
                 MODEL_SIZE="14B"
-                RESOLUTION="1280*720"
+                RESOLUTION="720*1280"
                 ;;
         esac
 

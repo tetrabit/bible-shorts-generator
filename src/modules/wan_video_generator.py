@@ -22,7 +22,7 @@ class WanVideoGenerator:
         self.model_dir = Path(config.models.get('wan', {}).get('model_dir', 'models/wan2.1-weights')).resolve()
         self.model_size = config.models.get('wan', {}).get('size', '1.3B')  # '1.3B' or '14B'
         self.max_duration = config.models.get('wan', {}).get('max_duration', 5)
-        self.resolution = config.models.get('wan', {}).get('resolution', '832*480')  # or '1280*720'
+        self.resolution = self._resolve_resolution(config)
         self.offload_model = config.models.get('wan', {}).get('offload_model', True)
         self.sample_shift = config.models.get('wan', {}).get('sample_shift', 8)
         self.sample_guide_scale = config.models.get('wan', {}).get('sample_guide_scale', 6)
@@ -115,7 +115,7 @@ class WanVideoGenerator:
                         "re-download the 1.3B checkpoint:\n"
                         "  rm -rf models/wan2.1-weights\n"
                         "  python3 download_wan_weights.py  # choose 1.3B\n"
-                        "Then rerun with resolution 832*480."
+                        "Then rerun with resolution 480*832."
                     )
                 raise RuntimeError(
                     f"Wan T2V generation failed:\n{result.stderr}\n\n"
@@ -180,3 +180,42 @@ class WanVideoGenerator:
             return
         except Exception:
             return
+
+    def _resolve_resolution(self, config):
+        """
+        Choose a Wan resolution that is both supported and matches the target
+        aspect ratio (prefer vertical when the final video is vertical).
+        """
+        requested = config.models.get('wan', {}).get('resolution')
+        task = f"t2v-{self.model_size}"
+        supported = {
+            "t2v-1.3B": ("480*832", "832*480"),
+            "t2v-14B": ("720*1280", "1280*720", "480*832", "832*480"),
+        }.get(task, ("480*832", "832*480"))
+
+        def is_vertical(res):
+            try:
+                w, h = (int(x) for x in res.split("*"))
+                return h > w
+            except Exception:
+                return False
+
+        video_cfg = config.video if hasattr(config, "video") else {}
+        target_vertical = video_cfg.get("height", 0) > video_cfg.get("width", 0)
+
+        if requested in supported:
+            return requested
+
+        if requested and requested not in supported:
+            logger.warning(
+                "Requested Wan resolution %s is not supported for %s. "
+                "Falling back to a supported size.", requested, task
+            )
+
+        preferred = [r for r in supported if is_vertical(r)] if target_vertical else [r for r in supported if not is_vertical(r)]
+        if not preferred:
+            preferred = list(supported)
+
+        chosen = preferred[0]
+        logger.info("Using Wan resolution %s for task %s", chosen, task)
+        return chosen
