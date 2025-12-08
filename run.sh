@@ -79,15 +79,21 @@ case "$1" in
         echo "4. Testing Piper TTS..."
         python3 -c "from src.modules.tts_engine import TTSEngine; from src.config import config; tts = TTSEngine(config); print('✓ Piper available' if tts.test_installation() else '✗ Piper not found')"
 
-        echo "5. Checking Qwen3-VL (optional)..."
+        echo "5. Checking Wan T2V..."
         python3 - <<'PY'
 from pathlib import Path
 from src.config import config
-repo = Path(config.models['qwen3']['repo_dir'])
-if repo.exists():
-    print(f"✓ Qwen3-VL repo found at {repo}")
+repo = Path(config.models['wan']['repo_dir'])
+weights = Path(config.models['wan']['model_dir'])
+if repo.exists() and (repo / 'generate.py').exists():
+    print(f"✓ Wan repository found at {repo}")
 else:
-    print(f"⚠ Qwen3-VL repo missing (expected at {repo})")
+    print(f"✗ Wan repository missing at {repo}")
+if weights.exists() and any(weights.glob('*.safetensors')):
+    weight_size = sum(f.stat().st_size for f in weights.rglob('*') if f.is_file()) / (1024**3)
+    print(f"✓ Wan weights found at {weights} ({weight_size:.1f} GB)")
+else:
+    print(f"✗ Wan weights missing at {weights}")
 PY
 
         echo ""
@@ -140,11 +146,6 @@ PY
         python3 auth.py
         ;;
 
-    models)
-        # Download models
-        python3 download_models.py
-        ;;
-
     --help|help|-h)
         echo "Bible Shorts Generator - Command Line Interface"
         echo ""
@@ -163,7 +164,6 @@ PY
         echo "  clean             Delete generated files"
         echo "  db <cmd>          Database operations"
         echo "  auth              Authenticate with YouTube"
-        echo "  models            Download AI models"
         echo "  help              Show this help message"
         echo ""
         echo "Examples:"

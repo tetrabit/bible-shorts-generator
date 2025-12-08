@@ -16,12 +16,11 @@ from src.utils.logger import setup_logger
 from src.modules.database import Database
 from src.modules.verse_selector import VerseSelector
 from src.modules.timing_analyzer import TimingAnalyzer
-from src.modules.video_generator import VideoGenerator
 from src.modules.tts_engine import TTSEngine
 from src.modules.word_aligner import WordAligner
 from src.modules.subtitle_renderer import SubtitleRenderer
 from src.modules.video_composer import VideoComposer
-from src.modules.qwen_video_generator import QwenVideoGenerator
+from src.modules.wan_video_generator import WanVideoGenerator
 from src.modules.youtube_uploader import YouTubeUploader
 from src.utils.file_manager import archive_video, cleanup_intermediate_files
 
@@ -40,9 +39,8 @@ class BibleShortsGenerator:
         self.db = Database()
         self.verse_selector = VerseSelector(config, self.db)
         self.timing = TimingAnalyzer(config)
-        self.video_backend = config.video.get('backend', 'sdxl')
-        self.video_gen = VideoGenerator(config)
-        self.qwen_video_gen = QwenVideoGenerator(config, fallback=self.video_gen)
+        self.video_backend = config.video.get('backend', 'wan')
+        self.wan_video_gen = WanVideoGenerator(config)
         self.tts = TTSEngine(config)
         self.aligner = WordAligner(config)
         self.subtitle_renderer = SubtitleRenderer(config)
@@ -105,18 +103,34 @@ class BibleShortsGenerator:
             try:
                 # Step 2: Generate background video
                 task = progress.add_task("Generating background video...", total=None)
-                if self.video_backend == "qwen3":
-                    self.qwen_video_gen.generate(
-                        verse['text'],
-                        verse['duration'],
-                        paths['background']
-                    )
-                else:
-                    self.video_gen.generate(
-                        verse['text'],
-                        verse['duration'],
-                        paths['background']
-                    )
+                if not self.wan_video_gen.is_available():
+                    raise RuntimeError("Wan backend unavailable. Ensure repo and weights are present.")
+
+                # Prefer Wan T2V; raise if it cannot run so the caller can see the error.
+                can_run_wan = True
+                try:
+                    import torch
+                    if torch.cuda.is_available():
+                        free_bytes, total_bytes = torch.cuda.mem_get_info()
+                        min_free = 8 * 1024**3  # require ~8GB free for Wan 1.3B
+                        if free_bytes < min_free:
+                            can_run_wan = False
+                            logger.error(
+                                "Insufficient free VRAM for Wan "
+                                f"({free_bytes/1e9:.1f}GB/{total_bytes/1e9:.1f}GB)."
+                            )
+                            console.print("[red]Not enough free VRAM for Wan.[/red]")
+                except Exception:
+                    pass
+
+                if not can_run_wan:
+                    raise RuntimeError("Not enough free VRAM for Wan T2V.")
+
+                self.wan_video_gen.generate(
+                    verse['text'],
+                    verse['duration'],
+                    paths['background']
+                )
                 self.db.update_video_path(video_id, 'background_path', paths['background'])
                 progress.update(task, completed=100)
 

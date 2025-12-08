@@ -58,12 +58,158 @@ echo ""
 
 # Create directory structure
 echo "Creating directory structure..."
-mkdir -p models/{sdxl,piper,whisper}
+mkdir -p models/{piper,whisper}
 mkdir -p models/qwen3-vl
 mkdir -p data/bible
 mkdir -p generated/{backgrounds,audio,timestamps,subtitles,final,uploaded}
 mkdir -p logs
 echo "✓ Directories created"
+echo ""
+
+# Clone Wan T2V repository for text-to-video backend
+echo "=========================================="
+echo "Wan Text-to-Video Setup"
+echo "=========================================="
+echo ""
+echo "Wan is Alibaba's text-to-video model (actual video generation from text)."
+echo "Note: This is different from Qwen3-VL (which is vision-to-text)."
+echo ""
+read -p "Set up Wan text-to-video backend? (y/n): " -n 1 -r
+echo ""
+echo ""
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    # Clone Wan repository
+    if [ -d "models/wan2.1/.git" ]; then
+        echo "✓ Wan repository already present at models/wan2.1"
+    else
+        echo "Cloning Wan2.1 repository..."
+        set +e
+        git clone https://github.com/Wan-Video/Wan2.1.git models/wan2.1
+        clone_status=$?
+        set -e
+        if [ $clone_status -ne 0 ]; then
+            echo "⚠ Failed to clone Wan repository."
+            echo "You can clone manually: git clone https://github.com/Wan-Video/Wan2.1.git models/wan2.1"
+        else
+            echo "✓ Wan repository cloned to models/wan2.1"
+        fi
+    fi
+    echo ""
+
+    # Install Wan dependencies
+    if [ -d "models/wan2.1" ] && [ -f "models/wan2.1/requirements.txt" ]; then
+        echo "Installing Wan dependencies..."
+        set +e
+        pip install -r models/wan2.1/requirements.txt
+        wan_deps_status=$?
+        set -e
+        if [ $wan_deps_status -ne 0 ]; then
+            echo "⚠ Some Wan dependencies failed to install."
+            echo "Note: If flash_attn fails, you can continue - it's optional."
+            echo "You can retry: cd models/wan2.1 && pip install -r requirements.txt"
+        else
+            echo "✓ Wan dependencies installed"
+        fi
+    fi
+    echo ""
+
+    # Download Wan model weights
+    echo "=========================================="
+    echo "Wan Model Weights Download"
+    echo "=========================================="
+    echo ""
+    echo "Available models:"
+    echo "  1) Wan2.1-T2V-1.3B (~3GB) - Consumer GPU (8GB VRAM)"
+    echo "     Generates 480p videos in ~4 minutes"
+    echo ""
+    echo "  2) Wan2.1-T2V-14B (~28GB) - High-end GPU (24GB+ VRAM)"
+    echo "     Generates 720p videos, better quality"
+    echo ""
+    echo "  3) Skip - Download manually later"
+    echo ""
+    read -p "Select model (1-3): " -n 1 -r model_choice
+    echo ""
+    echo ""
+
+    if [[ $model_choice =~ ^[1-2]$ ]]; then
+        # Ensure huggingface-cli is installed
+        echo "Installing huggingface-cli (if not present)..."
+        pip install "huggingface_hub[cli]" --quiet
+
+        # Determine model ID based on choice
+        case $model_choice in
+            1)
+                MODEL_ID="Wan-AI/Wan2.1-T2V-1.3B"
+                MODEL_SIZE="1.3B"
+                RESOLUTION="832*480"
+                ;;
+            2)
+                MODEL_ID="Wan-AI/Wan2.1-T2V-14B"
+                MODEL_SIZE="14B"
+                RESOLUTION="1280*720"
+                ;;
+        esac
+
+        echo "Downloading $MODEL_ID..."
+        echo "This may take 5-60 minutes depending on your connection..."
+        echo ""
+
+        # Download model weights using huggingface-cli
+        set +e
+        huggingface-cli download $MODEL_ID --local-dir models/wan2.1-weights
+        download_status=$?
+        set -e
+
+        if [ $download_status -eq 0 ]; then
+            echo ""
+            echo "✓ Wan model weights successfully downloaded!"
+            echo ""
+
+            # Update config.yaml with the downloaded model
+            python3 - <<PY
+from pathlib import Path
+import re
+
+config_file = Path("config.yaml")
+if config_file.exists():
+    try:
+        content = config_file.read_text()
+
+        # Update Wan model size
+        content = re.sub(
+            r'(size:\s*)"[^"]*"(\s*#.*1\.3B.*14B)',
+            f'\\1"${MODEL_SIZE}"\\2',
+            content
+        )
+
+        # Update resolution
+        content = re.sub(
+            r'(resolution:\s*)"[^"]*"(\s*#.*for)',
+            f'\\1"${RESOLUTION}"\\2',
+            content
+        )
+
+        config_file.write_text(content)
+        print(f"✓ Updated config.yaml with Wan model: ${MODEL_SIZE}")
+    except Exception as e:
+        print(f"⚠ Could not auto-update config.yaml: {e}")
+        print(f"Please manually set: models.wan.size: \"${MODEL_SIZE}\"")
+PY
+        else
+            echo ""
+            echo "⚠ Wan model download encountered issues."
+            echo "You can retry with: python3 download_wan_weights.py"
+        fi
+    else
+        echo "Skipping Wan weights download."
+        echo "You can download later with: python3 download_wan_weights.py"
+    fi
+    echo ""
+else
+    echo "Skipping Wan setup."
+    echo "To set up later, see: WAN_SETUP.md"
+fi
 echo ""
 
 # Initialize database
@@ -75,76 +221,6 @@ echo ""
 # Download Bible data
 echo "Downloading Bible data..."
 python3 download_bible.py
-echo ""
-
-# Download AI models (optional - can be slow)
-read -p "Download AI models now? This will download ~15GB (y/n): " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    python3 download_models.py
-else
-    echo "Skipping model download. You can run 'python3 download_models.py' later."
-fi
-echo ""
-
-# Clone Qwen3-VL repository for text-to-video backend
-echo "Cloning Qwen3-VL (required for qwen3 backend)..."
-if [ -d "models/qwen3-vl/.git" ]; then
-    echo "✓ Qwen3-VL already present at models/qwen3-vl"
-else
-    set +e
-    git clone https://github.com/QwenLM/Qwen3-VL.git models/qwen3-vl
-    clone_status=$?
-    set -e
-    if [ $clone_status -ne 0 ]; then
-        echo "⚠ Failed to clone Qwen3-VL. Please clone manually into models/qwen3-vl."
-    else
-        echo "✓ Qwen3-VL cloned to models/qwen3-vl"
-    fi
-fi
-echo ""
-
-# Best-effort install of Qwen3-VL python package (dependencies/weights may still be needed)
-if [ -d "models/qwen3-vl" ]; then
-    # Install requirements if present
-    if [ -f "models/qwen3-vl/requirements.txt" ]; then
-        echo "Installing Qwen3-VL requirements..."
-        set +e
-        pip install -r models/qwen3-vl/requirements.txt
-        req_status=$?
-        set -e
-        if [ $req_status -ne 0 ]; then
-            echo "⚠ Qwen3-VL requirements install had issues. Check models/qwen3-vl/requirements.txt manually."
-        else
-            echo "✓ Qwen3-VL requirements installed"
-        fi
-    fi
-
-    if [ -f "models/qwen3-vl/setup.py" ] || [ -f "models/qwen3-vl/pyproject.toml" ]; then
-        echo "Installing Qwen3-VL Python package (editable)..."
-        set +e
-        (cd models/qwen3-vl && pip install -e .)
-        install_status=$?
-        set -e
-        if [ $install_status -ne 0 ]; then
-            echo "⚠ Qwen3-VL package install had issues. Check requirements in models/qwen3-vl/README.md."
-        else
-            echo "✓ Qwen3-VL package installed (editable)"
-        fi
-    else
-        echo "Qwen3-VL repo has no setup.py/pyproject.toml; adding repo to Python path via .pth..."
-        python3 - <<'PY'
-import site
-from pathlib import Path
-repo = Path("models/qwen3-vl").resolve()
-site_dir = Path(site.getsitepackages()[0])
-pth = site_dir / "qwen3_vl_local.pth"
-pth.write_text(str(repo))
-print(f"✓ Added {repo} to sys.path via {pth}")
-PY
-    fi
-    echo "Remember to download Qwen3-VL weights per their README."
-fi
 echo ""
 
 # Create .env from example if it doesn't exist
@@ -163,8 +239,7 @@ echo "Next steps:"
 echo "1. Add your YouTube API credentials to .env"
 echo "2. Get credentials from: https://console.cloud.google.com/"
 echo "3. Run: python3 auth.py (to authenticate YouTube)"
-echo "4. If you skipped models, run: python3 download_models.py"
-echo "5. Test generation: ./run.sh generate 1"
+echo "4. Test generation: ./run.sh generate 1"
 echo ""
 echo "For help: ./run.sh --help"
 echo ""

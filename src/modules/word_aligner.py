@@ -208,9 +208,12 @@ class WordAligner:
         if self.device != "cuda":
             return
 
-        # Force WhisperX to CPU to avoid environments without full cuDNN runtimes
+        # If CUDA is available, keep GPU; otherwise fall back to CPU.
+        if torch.cuda.is_available():
+            return
+
         if not self._cpu_forced:
-            print("Using CPU for WhisperX to avoid CUDA/cuDNN runtime issues.")
+            print("CUDA not available; falling back to CPU for WhisperX.")
         self.device = "cpu"
         self.compute_type = "float32"
         self._cpu_forced = True

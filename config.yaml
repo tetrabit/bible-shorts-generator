@@ -6,7 +6,7 @@ video:
   height: 1920
   fps: 30
   max_duration: 7
-  backend: "qwen3"  # sdxl (Stable Diffusion XL) or qwen3 (Qwen3-VL text-to-video)
+  backend: "wan"  # Alibaba Wan T2V text-to-video
   skip_subtitles: false  # set true to compose without subtitle overlay (debug video+audio only)
   format: "mp4"
   codec: "libx264"
@@ -45,18 +45,15 @@ bible:
 
 # AI Models
 models:
-  sdxl:
-    model_id: "stabilityai/stable-diffusion-xl-base-1.0"
-    device: "cuda"  # or "cpu"
-    dtype: "float16"  # or "float32" for CPU
-    skip: false  # skip SDXL and use placeholder backgrounds for fast testing
-    num_inference_steps: 25
-    guidance_scale: 7.5
-
-  qwen3:
-    repo_dir: "models/qwen3-vl"  # path to cloned Qwen3-VL repository
-    model_id: "Qwen/Qwen3-VL"    # placeholder id; install per Qwen3-VL docs
-    max_duration: 6              # seconds to generate for text-to-video
+  wan:
+    repo_dir: "models/wan2.1"  # Wan T2V repository
+    model_dir: "models/wan2.1-weights"  # Downloaded model weights
+    size: "1.3B"  # Use "14B" only if you have a high-end GPU and matching weights
+    max_duration: 5  # seconds
+    resolution: "832*480"  # 1.3B supports 480*832 or 832*480; 1280*720 is for 14B
+    offload_model: true  # Memory optimization (recommended)
+    sample_shift: 8
+    sample_guide_scale: 6
 
   tts:
     engine: "piper"
@@ -65,21 +62,8 @@ models:
 
   whisper:
     model_size: "base"  # tiny, base, small, medium, large
-    device: "cuda"
-    compute_type: "float16"
-
-# Prompt Templates
-prompts:
-  style: "cinematic, beautiful, ethereal, peaceful, spiritual, high quality, detailed"
-  negative: "ugly, blurry, low quality, distorted, text, watermark, signature, deformed"
-  themes:
-    default: "peaceful nature scene, soft golden lighting, cinematic composition, serene atmosphere"
-    hope: "sunrise over mountains, golden hour, rays of light breaking through clouds, uplifting atmosphere"
-    strength: "majestic mountain peaks, powerful ocean waves, dramatic landscape, inspiring vista"
-    peace: "calm waters reflecting sky, gentle breeze through trees, serene forest clearing, tranquil scene"
-    love: "warm sunset colors, soft diffused light, embracing warmth, tender atmosphere"
-    faith: "light breaking through darkness, path forward, guiding light, spiritual journey"
-    wisdom: "ancient tree, peaceful library, sacred space, contemplative atmosphere"
+    device: "cpu"  # use CPU to avoid CUDA/cuDNN issues during alignment
+    compute_type: "float32"
 
 # YouTube Settings
 youtube:
