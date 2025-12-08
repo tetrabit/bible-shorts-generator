@@ -11,7 +11,7 @@ Generates YouTube Shorts (vertical 1080x1920, <7s) from Bible verses using Aliba
 - Schedule: `./run.sh schedule` (gen every 2h, uploads at configured times, retries failures).
 
 ### Wan 1.3B notes
-- For Shorts, set `models.wan.resolution: "480*832"` (vertical). `832*480` is horizontal; `1280*720` is only for 14B.
+- For Shorts, set `models.wan.resolution: "480*832"` (vertical). `832*480` is horizontal; `1280*720` is only for 14B. If you set an unsupported size, the app falls back to a supported one (prefers vertical when the output is vertical).
 - Re-download weights if you see size-mismatch errors: `python3 download_wan_weights.py` (option 1) will clear the folder first.
 - Install accelerate in the venv to speed loading: `venv/bin/pip install --upgrade "accelerate>=0.30.1"`.
 - If FlashAttention isn’t available, the code falls back to PyTorch SDPA (slower but works).

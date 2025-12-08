@@ -95,7 +95,7 @@ Bible Shorts Generator: Automated YouTube Shorts creator that generates vertical
 - `video.backend`: Must be `"wan"` (only backend)
 - `video.skip_subtitles`: Set `true` to skip subtitle rendering (debug video+audio only)
 - `models.wan.size`: `"1.3B"` (8GB VRAM) or `"14B"` (24GB+ VRAM)
-- `models.wan.resolution`: `"480*832"` (vertical default for 1.3B), `"832*480"` (horizontal), `"1280*720"/"720*1280"` for 14B
+- `models.wan.resolution`: `"480*832"` (vertical default for 1.3B), `"832*480"` (horizontal), `"1280*720"/"720*1280"` for 14B. If an unsupported size is set, the app falls back to a supported one, preferring vertical when the final video is vertical.
 - `models.wan.offload_model`: Memory optimization (recommended `true`)
 - `bible.books`: List of books to use for verse selection
 - `bible.max_words`: Max words per verse (affects duration, <7s recommended)

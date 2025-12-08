@@ -26,7 +26,7 @@
    `./run.sh schedule` (gen every 2h, uploads at configured times, retries failures, cleanup/vacuum jobs).
 
 Troubleshooting (Wan 1.3B):
-- Ensure `models.wan.size: "1.3B"` and `models.wan.resolution: "480*832"` (vertical for Shorts; horizontal option is `832*480`).
+- Ensure `models.wan.size: "1.3B"` and `models.wan.resolution: "480*832"` (vertical for Shorts; horizontal option is `832*480`). If you enter an unsupported size, the generator will choose a supported one (prefers vertical when final video is vertical).
 - If you hit size-mismatch errors, re-download weights: `python3 download_wan_weights.py` (option 1 clears the folder first).
 - Install accelerate inside the venv for faster/leaner loads: `venv/bin/pip install --upgrade "accelerate>=0.30.1"`.
 - FlashAttention is optional; if not installed, the generator falls back to PyTorch SDPA (slower).

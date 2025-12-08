@@ -8,7 +8,7 @@
 
 ## How to generate
 1) Ensure Wan repo + 1.3B weights exist (`models/wan2.1`, `models/wan2.1-weights`).
-2) Config: `models.wan.size: "1.3B"`, `models.wan.resolution: "480*832"` (vertical for Shorts).
+2) Config: `models.wan.size: "1.3B"`, `models.wan.resolution: "480*832"` (vertical for Shorts). If an invalid size is set, the generator auto-falls back to the closest supported size (prefers vertical when the final video is vertical).
 3) Run: `./run.sh generate 1` → final video in `generated/final/<verse_id>.mp4`.
 
 ## Troubleshooting quick hits
