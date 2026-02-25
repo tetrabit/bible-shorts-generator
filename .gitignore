@@ -36,10 +36,8 @@ env/
 client_secrets.json
 *.json.backup
 
-# AI Models (large files)
-models/sdxl/
-models/piper/
-models/whisper/
+# AI Models (large files, local-only)
+models/
 
 # Generated Content
 generated/backgrounds/
